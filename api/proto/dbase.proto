@@ -1,0 +1,20 @@
+syntax = "proto3";
+option java_multiple_files = true;
+option java_package = "webchat.dbase";
+package dbase;
+
+// Login a user to chat
+message ConnectRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message ConnectResponse {
+  string token = 1;
+  string message = 2;
+}
+
+service Dbase {
+  rpc connect (ConnectRequest) returns (ConnectResponse);
+  //rpc create (CreateRequest) returns (CreateResponse);
+}

@@ -1,0 +1,21 @@
+[package]
+name = "db-server"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]] # Bin to run the HelloWorld gRPC server
+name = "db-server"
+path = "src/server.rs"
+
+[[bin]] # Bin to run the HelloWorld gRPC client
+name = "db-client"
+path = "src/client.rs"
+
+[dependencies]
+tonic = "0.12.3"
+prost = "0.13.5"
+serde = { version = "1.0.217", features = ["derive"] }
+tokio = { version = "1.43.0", features = ["macros", "rt-multi-thread"] }
+
+[build-dependencies]
+tonic-build = "0.12.3"

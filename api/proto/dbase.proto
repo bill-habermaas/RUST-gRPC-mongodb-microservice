@@ -4,17 +4,16 @@ option java_package = "webchat.dbase";
 package dbase;
 
 // Login a user to chat
-message ConnectRequest {
+message DbinitRequest {
   string username = 1;
   string password = 2;
 }
 
-message ConnectResponse {
+message DbinitResponse {
   string token = 1;
   string message = 2;
 }
 
 service Dbase {
-  rpc connect (ConnectRequest) returns (ConnectResponse);
-  //rpc create (CreateRequest) returns (CreateResponse);
+  rpc dbinit (DbinitRequest) returns (DbinitResponse);
 }

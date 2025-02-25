@@ -3,11 +3,11 @@ name = "db-server"
 version = "0.1.0"
 edition = "2024"
 
-[[bin]] # Bin to run the HelloWorld gRPC server
+[[bin]] # Bin to run the gRPC server
 name = "db-server"
 path = "src/server.rs"
 
-[[bin]] # Bin to run the HelloWorld gRPC client
+[[bin]] # Bin to run the gRPC client
 name = "db-client"
 path = "src/client.rs"
 

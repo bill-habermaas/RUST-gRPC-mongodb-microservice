@@ -1,7 +1,7 @@
 use tonic::{transport::Server, Request, Response, Status};
 
 use dbase::dbase_server::{Dbase, DbaseServer};
-//use auth::{LoginResponse, LoginRequest};
+// use dbase::{DbinitRequest};
 
 // Import the generated proto-rust file into a module
 pub mod dbase {
@@ -16,13 +16,13 @@ pub struct MyDbase {}
 // Implement the service function(s) defined in the proto
 #[tonic::async_trait]
 impl Dbase for MyDbase {
-    async fn connect(
+    async fn dbinit(
         &self,
-        request: Request<dbase::ConnectRequest>,
-    ) -> Result<Response<dbase::ConnectResponse>, Status> {
+        request: Request<dbase::DbinitRequest>,
+    ) -> Result<Response<dbase::DbinitResponse>, Status> {
         println!("Received request from: {:?}", request);
 
-        let response = dbase::ConnectResponse {
+        let response = dbase::DbinitResponse {
             token: format!("Hello {}!", request.into_inner().username).into(),
             message: "howdy".to_string(),
         };
@@ -30,7 +30,6 @@ impl Dbase for MyDbase {
         Ok(Response::new(response))
     }
 }
-
 // Runtime to run our server
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

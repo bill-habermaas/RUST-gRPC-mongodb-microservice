@@ -3,17 +3,64 @@ option java_multiple_files = true;
 option java_package = "webchat.dbase";
 package dbase;
 
-// Login a user to chat
-message DbinitRequest {
-  string username = 1;
-  string password = 2;
+// Common response header
+message DbaseStatus {
+  bool success= 1;
+  string error_message = 2;
 }
 
-message DbinitResponse {
-  string token = 1;
+// Initialize the database request
+message DbinitRequest {
+  string dbspec = 1;
+  string dbname = 2;
+}
+
+message DbquitRequest {
+  string reason = 1;
+}
+
+// Request message of the day
+message MotdRequest {
+  string filter = 1;
+}
+
+// Message of the day response
+message MotdResponse {
+  DbaseStatus status = 1;
   string message = 2;
 }
 
+// Get the userid from the database
+message GetUserRequest {
+  string userid = 1;
+}
+
+// User information packet
+message UserInfo {
+  string userid = 1;
+  string username = 2;
+  string password = 3;
+  string aliasname = 4;
+  string phonenumber = 5;
+  bool   isadminuser = 6;
+  string emailaddress = 7;
+}
+
+// Response from GetUser request
+message GetUserResponse {
+  DbaseStatus status = 1;
+  UserInfo userinfo = 3;
+}
+
+// Store the user in the database
+message SetUserRequest {
+  UserInfo userinfo = 1;
+}
+
 service Dbase {
-  rpc dbinit (DbinitRequest) returns (DbinitResponse);
+  rpc dbinit (DbinitRequest) returns (DbaseStatus);
+  rpc dbquit (DbquitRequest) returns (DbaseStatus);
+  rpc getmotd (MotdRequest) returns (MotdResponse);
+  rpc getuser (GetUserRequest) returns (GetUserResponse);
+  rpc setuser (SetUserRequest) returns (DbaseStatus);
 }

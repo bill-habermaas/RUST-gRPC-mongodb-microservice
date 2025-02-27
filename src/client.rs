@@ -11,8 +11,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut client = DbaseClient::connect("http://[::1]:50052").await?;
 
     let request = tonic::Request::new(DbinitRequest {
-        username: "Tonic".into(),
-        password: "password".into(),
+        dbspec: "mongodb://localhost:27017".to_string(),
     });
 
     println!("Sending request to gRPC Server...");

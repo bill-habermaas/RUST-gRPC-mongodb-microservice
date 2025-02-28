@@ -32,7 +32,12 @@ message MotdResponse {
 
 // Get the userid from the database
 message GetUserRequest {
-  string userid = 1;
+  string username = 1;
+}
+
+// Delete the user from the database
+message DelUserRequest {
+  string username = 1;
 }
 
 // User information packet
@@ -42,13 +47,13 @@ message UserInfo {
   string password = 3;
   string aliasname = 4;
   string phonenumber = 5;
-  bool   isadminuser = 6;
+  string role = 6;
   string emailaddress = 7;
 }
 
 // Response from GetUser request
 message GetUserResponse {
-  DbaseStatus status = 1;
+  DbaseStatus status = 2;
   UserInfo userinfo = 3;
 }
 
@@ -63,4 +68,5 @@ service Dbase {
   rpc getmotd (MotdRequest) returns (MotdResponse);
   rpc getuser (GetUserRequest) returns (GetUserResponse);
   rpc setuser (SetUserRequest) returns (DbaseStatus);
+  rpc deluser (DelUserRequest) returns (DbaseStatus);
 }

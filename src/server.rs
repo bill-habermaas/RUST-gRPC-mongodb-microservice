@@ -1,9 +1,14 @@
+use bson::Document;
 use tonic::{transport::Server, Request, Response, Status};
 extern crate mongodb;
 use mongodb::{Client, options::{ClientOptions}};
+use mongodb::Collection;
 use dbase::dbase_server::{Dbase, DbaseServer};
-use crate::dbase::DbaseStatus;
+use dbase::UserInfo;
+use crate::dbase::{DbaseStatus, GetUserResponse, SetUserRequest};
 use mongodb::Database;
+use mongodb::bson::doc;
+//use bson::doc;
 
 use once_cell::sync::OnceCell;
 
@@ -49,12 +54,9 @@ impl Dbase for MyDbase {
         Ok(Response::new(response))
     }
 
-    async fn getmotd(
-        &self,
-        request: Request<dbase::MotdRequest>,
-    ) -> Result<Response<dbase::MotdResponse>, Status> {
-        println!("Received request from: {:?}", request);
-        let req = request.into_inner();
+    async fn getmotd(&self, request: Request<dbase::MotdRequest>,
+        ) -> Result<Response<dbase::MotdResponse>, Status> {
+        let _req = request.into_inner();
         let status = dbase::DbaseStatus {
             success: true,
             error_message:  "".to_string(),
@@ -66,45 +68,23 @@ impl Dbase for MyDbase {
         Ok(Response::new(response))
     }
 
-    async fn getuser(
-        &self,
-        request: Request<dbase::GetUserRequest>,
-    ) -> Result<Response<dbase::GetUserResponse>, Status> {
-        println!("Received request from: {:?}", request);
-
-        let status = dbase::DbaseStatus {
-            success: false,
-            error_message: "user failed".to_string(),
-        };
-        /*
-        let userinfo = dbase.UserInfo (
-            userid:   None(),
-            username: None(),
-            password: None(),
-            aliasname: None(),
-            phonenumber: None(),
-            isadminuser: false,
-            emailaddress: None(),
-        );
-
-         */
-        let response = dbase::GetUserResponse {
-            status: Some(status),
-            userinfo: None,
-        };
+    async fn getuser(&self,
+        request: Request<dbase::GetUserRequest>,) -> Result<Response<dbase::GetUserResponse>, Status> {
+        let req = request.into_inner();
+        let response = handle_getuser(&req.username).await;
         Ok(Response::new(response))
     }
 
-    async fn setuser(
-        &self,
-        request: Request<dbase::SetUserRequest>,
-    ) -> Result<Response<dbase::DbaseStatus>, Status> {
-        println!("Received request from: {:?}", request);
+    async fn setuser(&self,
+        request: Request<dbase::SetUserRequest>,) -> Result<Response<dbase::DbaseStatus>, Status> {
+        let req = request.into_inner();
+        let response = handle_setuser(&req).await;
+        Ok(Response::new(response))
+    }
 
-        let response = dbase::DbaseStatus {
-            success: true,
-            error_message: "".to_string(),
-        };
+    async fn deluser(&self, request: Request<dbase::DelUserRequest>,) -> Result<Response<dbase::DbaseStatus>, Status> {
+        let req = request.into_inner();
+        let response = handle_deluser(&req.username).await;
         Ok(Response::new(response))
     }
 }
@@ -124,6 +104,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+// Initialize and start the database
 async fn start_database (dbspec: &String, dbname: &String) -> DbaseStatus {
     if MONGODB.get().is_some() == false {
         if let Ok(client_options) = ClientOptions::parse(dbspec.as_str()).await {
@@ -139,10 +120,103 @@ async fn start_database (dbspec: &String, dbname: &String) -> DbaseStatus {
     rsp
 }
 
+// Orderly termination of the database
 async fn stop_database(reason: &String) -> DbaseStatus {
     let response = dbase::DbaseStatus {
         success: true,
         error_message: reason.to_string(),
+    };
+    response
+}
+
+async fn handle_getuser (username: &String) -> GetUserResponse {
+    let mut status = dbase::DbaseStatus {
+        success: false,
+        error_message: "database not initialized".to_string(),
+    };
+
+    if MONGODB.get().is_some() == true {
+        let filter = doc!("username": username);
+        let db = MONGODB.get();
+        let col: Collection<Document> = db.unwrap().collection("users");
+
+        let result = col.find_one(Some(filter), None).await;
+
+        println!("{:?}", &result);
+        match result {
+            Ok(result) => {
+                let document: Document = result.unwrap();
+                let userinfo = dbase::UserInfo {
+                    userid: document.get("_id").unwrap().as_object_id().unwrap().to_hex(),
+                    //userid: "0".to_string(),
+                    username: document.get("username").unwrap().as_str().unwrap().to_string(),
+                    password: document.get("password").unwrap().as_str().unwrap().to_string(),
+                    aliasname: document.get("aliasname").unwrap().as_str().unwrap().to_string(),
+                    phonenumber: document.get("phonenumber").unwrap().as_str().unwrap().to_string(),
+                    role: document.get("role").unwrap().as_str().unwrap().to_string(),
+                    emailaddress: document.get("emailaddress").unwrap().as_str().unwrap().to_string(),
+                };
+                status.success = true;
+                status.error_message = "".to_string();
+                let response = dbase::GetUserResponse {
+                    status: Some(status),
+                    userinfo: Some(userinfo),
+                };
+                return response;
+            }
+            Err(e) => {
+                status.success = false;
+                status.error_message = e.to_string();
+            },
+        };
+    }
+    let response = dbase::GetUserResponse {
+        status: Some(status),
+        userinfo: None,
+    };
+    response
+}
+
+async fn handle_setuser(req: &SetUserRequest) -> DbaseStatus {
+    let userinfo: UserInfo = req.userinfo.clone().unwrap();
+    let doc = doc!(
+        "username": userinfo.username,
+        "password": userinfo.password,
+        "aliasname": userinfo.aliasname,
+        "phonenumber": userinfo.phonenumber,
+        "role": userinfo.role,
+        "emailaddress": userinfo.emailaddress,
+        );
+    let db = MONGODB.get();
+    let col = db.unwrap().collection("users");
+    col.insert_one(doc, None).await.unwrap();
+
+    let response = dbase::DbaseStatus {
+        success: true,
+        error_message: "".to_string(),
+    };
+    response
+}
+
+async fn handle_deluser(username: &String) -> DbaseStatus {
+    let mut response = dbase::DbaseStatus {
+        success: true,
+        error_message: "".to_string(),
+    };
+    let db = MONGODB.get();
+    let col: Collection<Document> = db.unwrap().collection("users");
+    let filter = doc!("username": username);
+    let r = match col.delete_one(filter, None).await {
+        Err(e) => {
+            response.success = false;
+            response.error_message = e.to_string();
+        },
+        Ok(r) => {
+            if r.deleted_count == 0 {
+                response.success = false;
+                response.error_message = "nothing deleted".to_string();
+            }
+        },
     };
     response
 }

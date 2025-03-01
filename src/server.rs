@@ -14,7 +14,8 @@ mod motd;
 mod util;
 mod users;
 
-//Todo Add match/err handling for all status responses
+use util::makestatus;
+
 //Todo Add setting of MOTD
 //Todo Finish getMOTD
 //Todo code for user update
@@ -24,7 +25,6 @@ mod users;
 //Todo Prevent duplicate user records
 //Todo Move all user database code to a separate package
 //Todo Add apache license headers to each source module
-//Todo setup motd seperate handler
 
 use once_cell::sync::OnceCell;
 
@@ -131,19 +131,13 @@ async fn start_database (dbspec: &String, dbname: &String) -> DbaseStatus {
 
 // Orderly termination of the database
 async fn stop_database(reason: &String) -> DbaseStatus {
-    let response = dbase::DbaseStatus {
-        success: true,
-        error_message: reason.to_string(),
-    };
+    let response = util::makestatus(true, reason.clone());
     response
 }
 
 // Find the user and return all record fields
 async fn handle_getuser (username: &String) -> GetUserResponse {
-    let mut status = dbase::DbaseStatus {
-        success: false,
-        error_message: "database not initialized".to_string(),
-    };
+    let mut status = util::makestatus(false, "database not initialized".to_string());
 
     if MONGODB.get().is_some() == true {
         let filter = doc!("username": username);
@@ -151,8 +145,6 @@ async fn handle_getuser (username: &String) -> GetUserResponse {
         let col: Collection<Document> = db.unwrap().collection("users");
 
         let result = col.find_one(Some(filter), None).await;
-
-        println!("{:?}", &result);
         match result {
             Ok(result) => {
                 let document: Document = result.unwrap();
@@ -165,8 +157,7 @@ async fn handle_getuser (username: &String) -> GetUserResponse {
                     role: document.get("role").unwrap().as_str().unwrap().to_string(),
                     emailaddress: document.get("emailaddress").unwrap().as_str().unwrap().to_string(),
                 };
-                status.success = true;
-                status.error_message = "".to_string();
+                status = util::makestatus(true, "".to_string());
                 let response = dbase::GetUserResponse {
                     status: Some(status),
                     userinfo: Some(userinfo),
@@ -174,8 +165,7 @@ async fn handle_getuser (username: &String) -> GetUserResponse {
                 return response;
             }
             Err(e) => {
-                status.success = false;
-                status.error_message = e.to_string();
+                status = util::makestatus(false, e.to_string());
             },
         };
     }
@@ -199,22 +189,22 @@ async fn handle_setuser(req: &SetUserRequest) -> DbaseStatus {
         );
     let db = MONGODB.get();
     let col = db.unwrap().collection("users");
-    col.insert_one(doc, None).await.unwrap();
-
-    let response = dbase::DbaseStatus {
-        success: true,
-        error_message: "".to_string(),
+    let mut response: DbaseStatus = util::makestatus(false, "".to_string());
+    let res = match col.insert_one(doc, None).await {
+        Ok(r) => {
+            let id = r.inserted_id.to_string();
+            response = util::makestatus(true, id);
+        },
+        Err(e) => {
+            response = util::makestatus(false, e.to_string());
+        },
     };
     response
 }
 
-/*
 // Delete a user record
 async fn handle_deluser(username: &String) -> DbaseStatus {
-    let mut response = dbase::DbaseStatus {
-        success: true,
-        error_message: "".to_string(),
-    };
+    let mut response = util::makestatus(true, "".to_string());
     let db = MONGODB.get();
     let col: Collection<Document> = db.unwrap().collection("users");
     let filter = doc!("username": username);
@@ -232,4 +222,3 @@ async fn handle_deluser(username: &String) -> DbaseStatus {
     };
     response
 }
-*/

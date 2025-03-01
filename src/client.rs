@@ -1,6 +1,5 @@
-use tonic::Response;
+//use tonic::Response;
 use dbase::dbase_client::DbaseClient;
-//use dbase::DbaseStatus;
 use dbase::DbinitRequest;
 use dbase::SetUserRequest;
 use dbase::GetUserRequest;
@@ -35,7 +34,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let request = tonic::Request::new(SetUserRequest {
         userinfo: Some(userinfo),
     });
-    let response = client.setuser(request).await;
+    let _response = client.setuser(request).await;
     //println!("{}\n", response);
 
     let request = tonic::Request::new(GetUserRequest {

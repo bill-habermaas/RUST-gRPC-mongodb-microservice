@@ -10,6 +10,15 @@ use mongodb::Database;
 use mongodb::bson::doc;
 //use bson::doc;
 
+//Todo Add match/err handling for all status responses
+//Todo Add setting of MOTD
+//Todo Finish getMOTD
+//Todo code for user update
+//Todo code for user delete
+//Todo generate ObjectId used for all operations
+//Todo Add time stamps to user and motd records
+//Todo Prevent duplicate user records
+
 use once_cell::sync::OnceCell;
 
 static MONGODB: OnceCell<Database> = OnceCell::new();
@@ -129,6 +138,7 @@ async fn stop_database(reason: &String) -> DbaseStatus {
     response
 }
 
+// Find the user and return all record fields
 async fn handle_getuser (username: &String) -> GetUserResponse {
     let mut status = dbase::DbaseStatus {
         success: false,
@@ -148,7 +158,6 @@ async fn handle_getuser (username: &String) -> GetUserResponse {
                 let document: Document = result.unwrap();
                 let userinfo = dbase::UserInfo {
                     userid: document.get("_id").unwrap().as_object_id().unwrap().to_hex(),
-                    //userid: "0".to_string(),
                     username: document.get("username").unwrap().as_str().unwrap().to_string(),
                     password: document.get("password").unwrap().as_str().unwrap().to_string(),
                     aliasname: document.get("aliasname").unwrap().as_str().unwrap().to_string(),
@@ -177,6 +186,7 @@ async fn handle_getuser (username: &String) -> GetUserResponse {
     response
 }
 
+// Create a new user record
 async fn handle_setuser(req: &SetUserRequest) -> DbaseStatus {
     let userinfo: UserInfo = req.userinfo.clone().unwrap();
     let doc = doc!(
@@ -198,6 +208,7 @@ async fn handle_setuser(req: &SetUserRequest) -> DbaseStatus {
     response
 }
 
+// Delete a user record
 async fn handle_deluser(username: &String) -> DbaseStatus {
     let mut response = dbase::DbaseStatus {
         success: true,

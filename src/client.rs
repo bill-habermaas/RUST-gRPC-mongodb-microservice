@@ -4,6 +4,7 @@ use dbase::DbinitRequest;
 use dbase::SetUserRequest;
 use dbase::GetUserRequest;
 use dbase::GetUserResponse;
+use dbase::GetMotdRequest;
 use crate::dbase::{DelUserRequest, UserInfo};
 
 pub mod dbase {
@@ -11,6 +12,7 @@ pub mod dbase {
 }
 
 #[tokio::main]
+
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut client = DbaseClient::connect("http://[::1]:50052").await?;
 
@@ -48,7 +50,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         username:"bill".to_string(),
     });
     let response = client.deluser(request).await?;
-    println!("deluser: {:?}", response);
+    println!("deluser: {:?}\n", response);
+
+
+    let req = tonic::Request::new(GetMotdRequest {
+        motd_filter: "filter".to_string(),
+    });
+    let resp = client.getmotd(req).await?;
+    println!("getmotd {:?}\n", resp);
+
 
     Ok(())
 }

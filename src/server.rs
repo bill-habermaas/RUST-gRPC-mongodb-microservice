@@ -1,3 +1,4 @@
+
 use bson::Document;
 use tonic::{transport::Server, Request, Response, Status};
 extern crate mongodb;
@@ -8,7 +9,10 @@ use dbase::UserInfo;
 use crate::dbase::{DbaseStatus, GetUserResponse, SetUserRequest};
 use mongodb::Database;
 use mongodb::bson::doc;
-//use bson::doc;
+
+mod motd;
+mod util;
+mod users;
 
 //Todo Add match/err handling for all status responses
 //Todo Add setting of MOTD
@@ -18,6 +22,9 @@ use mongodb::bson::doc;
 //Todo generate ObjectId used for all operations
 //Todo Add time stamps to user and motd records
 //Todo Prevent duplicate user records
+//Todo Move all user database code to a separate package
+//Todo Add apache license headers to each source module
+//Todo setup motd seperate handler
 
 use once_cell::sync::OnceCell;
 
@@ -63,17 +70,10 @@ impl Dbase for MyDbase {
         Ok(Response::new(response))
     }
 
-    async fn getmotd(&self, request: Request<dbase::MotdRequest>,
-        ) -> Result<Response<dbase::MotdResponse>, Status> {
-        let _req = request.into_inner();
-        let status = dbase::DbaseStatus {
-            success: true,
-            error_message:  "".to_string(),
-        };
-        let response = dbase::MotdResponse {
-            status: Some(status),
-            message: format!("Hello motd!"),
-        };
+    async fn getmotd(&self, request: Request<dbase::GetMotdRequest>,
+        ) -> Result<Response<dbase::GetMotdResponse>, Status> {
+        let req = request.into_inner();
+        let response = motd::handle_getmotd(req.motd_filter).await;
         Ok(Response::new(response))
     }
 
@@ -93,7 +93,7 @@ impl Dbase for MyDbase {
 
     async fn deluser(&self, request: Request<dbase::DelUserRequest>,) -> Result<Response<dbase::DbaseStatus>, Status> {
         let req = request.into_inner();
-        let response = handle_deluser(&req.username).await;
+        let response = users::handle_deluser(&req.username).await;
         Ok(Response::new(response))
     }
 }
@@ -208,6 +208,7 @@ async fn handle_setuser(req: &SetUserRequest) -> DbaseStatus {
     response
 }
 
+/*
 // Delete a user record
 async fn handle_deluser(username: &String) -> DbaseStatus {
     let mut response = dbase::DbaseStatus {
@@ -217,7 +218,7 @@ async fn handle_deluser(username: &String) -> DbaseStatus {
     let db = MONGODB.get();
     let col: Collection<Document> = db.unwrap().collection("users");
     let filter = doc!("username": username);
-    let r = match col.delete_one(filter, None).await {
+    let _ = match col.delete_one(filter, None).await {
         Err(e) => {
             response.success = false;
             response.error_message = e.to_string();
@@ -231,3 +232,4 @@ async fn handle_deluser(username: &String) -> DbaseStatus {
     };
     response
 }
+*/

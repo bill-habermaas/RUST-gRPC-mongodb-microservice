@@ -62,11 +62,16 @@ message SetUserRequest {
   UserInfo userinfo = 1;
 }
 
+message SetUserResponse {
+  DbaseStatus status = 1;
+  string userid = 2;
+}
+
 service Dbase {
   rpc dbinit (DbinitRequest) returns (DbaseStatus);
   rpc dbquit (DbquitRequest) returns (DbaseStatus);
   rpc getmotd (GetMotdRequest) returns (GetMotdResponse);
   rpc getuser (GetUserRequest) returns (GetUserResponse);
-  rpc setuser (SetUserRequest) returns (DbaseStatus);
+  rpc setuser (SetUserRequest) returns (SetUserResponse);
   rpc deluser (DelUserRequest) returns (DbaseStatus);
 }

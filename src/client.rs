@@ -36,8 +36,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let request = tonic::Request::new(SetUserRequest {
         userinfo: Some(userinfo),
     });
-    let _response = client.setuser(request).await;
-    //println!("{}\n", response);
+    let response = client.setuser(request).await;
+    println!("set user --- {:?}\n", response);
 
     let request = tonic::Request::new(GetUserRequest {
         username: "bill".to_string(),
@@ -51,7 +51,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
     let response = client.deluser(request).await?;
     println!("deluser: {:?}\n", response);
-
 
     let req = tonic::Request::new(GetMotdRequest {
         motd_filter: "filter".to_string(),

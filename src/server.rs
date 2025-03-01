@@ -7,14 +7,13 @@ use mongodb::Collection;
 use dbase::dbase_server::{Dbase, DbaseServer};
 use dbase::UserInfo;
 use crate::dbase::{DbaseStatus, GetUserResponse, SetUserRequest};
+use crate::dbase::SetUserResponse;
 use mongodb::Database;
 use mongodb::bson::doc;
 
 mod motd;
 mod util;
 mod users;
-
-use util::makestatus;
 
 //Todo Add setting of MOTD
 //Todo Finish getMOTD
@@ -85,7 +84,7 @@ impl Dbase for MyDbase {
     }
 
     async fn setuser(&self,
-        request: Request<dbase::SetUserRequest>,) -> Result<Response<dbase::DbaseStatus>, Status> {
+        request: Request<dbase::SetUserRequest>,) -> Result<Response<dbase::SetUserResponse>, Status> {
         let req = request.into_inner();
         let response = handle_setuser(&req).await;
         Ok(Response::new(response))
@@ -177,7 +176,7 @@ async fn handle_getuser (username: &String) -> GetUserResponse {
 }
 
 // Create a new user record
-async fn handle_setuser(req: &SetUserRequest) -> DbaseStatus {
+async fn handle_setuser(req: &SetUserRequest) -> SetUserResponse {
     let userinfo: UserInfo = req.userinfo.clone().unwrap();
     let doc = doc!(
         "username": userinfo.username,
@@ -189,19 +188,28 @@ async fn handle_setuser(req: &SetUserRequest) -> DbaseStatus {
         );
     let db = MONGODB.get();
     let col = db.unwrap().collection("users");
-    let mut response: DbaseStatus = util::makestatus(false, "".to_string());
-    let res = match col.insert_one(doc, None).await {
+    let _res = match col.insert_one(doc, None).await {
         Ok(r) => {
             let id = r.inserted_id.to_string();
-            response = util::makestatus(true, id);
+            let status = util::makestatus(true, "".to_string());
+            let response = dbase::SetUserResponse {
+                status: Some(status),
+                userid: id,
+            };
+            return response;
         },
         Err(e) => {
-            response = util::makestatus(false, e.to_string());
+            let status = util::makestatus(false, e.to_string());
+            let response = dbase::SetUserResponse {
+                status: Some(status),
+                userid: "".to_string(),
+            };
+            return response;
         },
     };
-    response
 }
 
+/*
 // Delete a user record
 async fn handle_deluser(username: &String) -> DbaseStatus {
     let mut response = util::makestatus(true, "".to_string());
@@ -221,4 +229,4 @@ async fn handle_deluser(username: &String) -> DbaseStatus {
         },
     };
     response
-}
+ */

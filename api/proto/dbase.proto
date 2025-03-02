@@ -15,10 +15,6 @@ message DbinitRequest {
   string dbname = 2;
 }
 
-message DbquitRequest {
-  string reason = 1;
-}
-
 // Request message of the day
 message GetMotdRequest {
   string motd_filter = 1;
@@ -67,11 +63,20 @@ message SetUserResponse {
   string userid = 2;
 }
 
+message CheckUserRequest {
+  string username = 1;
+}
+
+message CheckUserResponse {
+  DbaseStatus status = 1;
+  string userid = 2;
+}
+
 service Dbase {
   rpc dbinit (DbinitRequest) returns (DbaseStatus);
-  rpc dbquit (DbquitRequest) returns (DbaseStatus);
   rpc getmotd (GetMotdRequest) returns (GetMotdResponse);
   rpc getuser (GetUserRequest) returns (GetUserResponse);
   rpc setuser (SetUserRequest) returns (SetUserResponse);
   rpc deluser (DelUserRequest) returns (DbaseStatus);
+  rpc chkuser (CheckUserRequest) returns (CheckUserResponse);
 }

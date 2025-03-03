@@ -1,6 +1,7 @@
 
 extern crate mongodb;
 
+use std::collections::HashMap;
 use bson::Document;
 use mongodb::Collection;
 use mongodb::bson::doc;
@@ -9,6 +10,7 @@ use crate::{dbase, util, MONGODB};
 use crate::dbase::{DbaseStatus, SetUserRequest, SetUserResponse, UserInfo};
 use crate::dbase::GetUserResponse;
 use crate::dbase::CheckUserResponse;
+use crate::dbase::UpdateUserResponse;
 
 // Find the user and return all record fields
 pub async fn handle_getuser (username: &String) -> GetUserResponse {
@@ -72,9 +74,6 @@ pub async fn handle_setuser(req: &SetUserRequest) -> SetUserResponse {
         };
         return dupresp;
     }
-
-
-
     let doc = doc!(
         "username": userinfo.username,
         "password": userinfo.password,
@@ -157,5 +156,14 @@ pub async fn handle_chkuser(username: &String) -> CheckUserResponse {
         },
     };
     response.status = Some(status);
+    response
+}
+
+pub async fn handle_upduser(username: String, mapfields: HashMap<String, String>) -> UpdateUserResponse {
+    let _username = username;
+    let status = util::makestatus(false, "not supported".to_string());
+    let response = dbase::UpdateUserResponse{
+        status: Some(status),
+    };
     response
 }

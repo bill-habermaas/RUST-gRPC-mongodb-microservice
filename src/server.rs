@@ -13,7 +13,6 @@ mod users;
 //Todo Add setting of MOTD
 //Todo Finish getMOTD
 //Todo code for user update
-//Todo generate ObjectId used for all operations
 //Todo Add time stamps to user and motd records
 //Todo Add apache license headers to each source module
 
@@ -77,6 +76,13 @@ impl Dbase for MyDbase {
         Ok(Response::new(response))
     }
 
+    async fn setmotd(&self, request: Request<dbase::SetMotdRequest>,
+    ) -> Result<Response<dbase::SetMotdResponse>, Status> {
+        let req = request.into_inner();
+        let response = motd::handle_setmotd(req.motd_filter).await;
+        Ok(Response::new(response))
+    }
+
     async fn getuser(&self,
         request: Request<dbase::GetUserRequest>,) -> Result<Response<dbase::GetUserResponse>, Status> {
         let req = request.into_inner();
@@ -90,6 +96,18 @@ impl Dbase for MyDbase {
         let response = users::handle_setuser(&req).await;
         Ok(Response::new(response))
     }
+
+    async fn upduser(&self, request: Request<dbase::UpdateUserRequest>,)
+        -> Result<Response<dbase::UpdateUserResponse>, Status> {
+        let req = request.into_inner();
+        let response = users::handle_upduser(req.username, req.mapfields).await;
+        Ok(Response::new(response))
+    }
+
+
+
+
+
 
     async fn deluser(&self, request: Request<dbase::DelUserRequest>,) -> Result<Response<dbase::DbaseStatus>, Status> {
         let req = request.into_inner();

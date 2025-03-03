@@ -26,6 +26,17 @@ message GetMotdResponse {
   string message = 2;
 }
 
+// Request set message of the day
+message SetMotdRequest {
+  string motd_filter = 1;
+  string motd_message = 2;
+}
+
+// Set message of the day response
+message SetMotdResponse {
+  DbaseStatus status = 1;
+}
+
 // Get the userid from the database
 message GetUserRequest {
   string username = 1;
@@ -72,11 +83,22 @@ message CheckUserResponse {
   string userid = 2;
 }
 
+message UpdateUserRequest {
+  string username = 1;
+  map<string, string> mapfields = 2;
+}
+
+message UpdateUserResponse {
+  DbaseStatus status = 1;
+}
+
 service Dbase {
   rpc dbinit (DbinitRequest) returns (DbaseStatus);
   rpc getmotd (GetMotdRequest) returns (GetMotdResponse);
+  rpc setmotd (SetMotdRequest) returns (SetMotdResponse);
   rpc getuser (GetUserRequest) returns (GetUserResponse);
   rpc setuser (SetUserRequest) returns (SetUserResponse);
+  rpc upduser (UpdateUserRequest) returns (UpdateUserResponse);
   rpc deluser (DelUserRequest) returns (DbaseStatus);
   rpc chkuser (CheckUserRequest) returns (CheckUserResponse);
 }

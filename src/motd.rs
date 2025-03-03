@@ -16,7 +16,6 @@ pub async fn handle_getmotd(motd_filter: String) -> GetMotdResponse {
     response
 }
 
-
 pub async fn handle_setmotd(motd_filter: String) -> SetMotdResponse {
     let status = util::makestatus(false, "not supported".to_string());
     let response = dbase::SetMotdResponse {

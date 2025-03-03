@@ -2,9 +2,9 @@
 extern crate mongodb;
 
 use std::collections::HashMap;
-use bson::Document;
 use mongodb::Collection;
 use mongodb::bson::doc;
+use mongodb::bson::{bson, Document};
 
 use crate::{dbase, util, MONGODB};
 use crate::dbase::{DbaseStatus, SetUserRequest, SetUserResponse, UserInfo};
@@ -160,8 +160,30 @@ pub async fn handle_chkuser(username: &String) -> CheckUserResponse {
 }
 
 pub async fn handle_upduser(username: String, mapfields: HashMap<String, String>) -> UpdateUserResponse {
-    let _username = username;
-    let status = util::makestatus(false, "not supported".to_string());
+    use mongodb::bson::Bson;
+    let username = username;
+    let mut status = util::makestatus(true, "".to_string());
+    // have to convert HashMap<String,String> to HashMap<String,Bson>
+    let mut mymap: HashMap<String, Bson> = HashMap::new();
+    // Iterate through incoming map
+    let mut bsonmap: HashMap<String, Bson> = HashMap::new();
+    for (key, value) in mymap {
+        bsonmap.insert(key.clone(), bson!(value.clone().to_string()));
+    }
+    let db = MONGODB.get();
+    let col: Collection<Document> = db.unwrap().collection("users");
+    let changes_document: Document = bsonmap.into_iter().collect();
+    match col.update_one(
+        doc! { "userName": username.to_string() },
+        doc! { "$set": changes_document },
+        None,
+    ).await {
+        Ok(r) => {
+            //status.error_message = "".to_string();
+        },
+        Err(e) => { status.success = false; status.error_message = e.to_string() },
+    }
+
     let response = dbase::UpdateUserResponse{
         status: Some(status),
     };

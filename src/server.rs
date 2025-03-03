@@ -104,11 +104,6 @@ impl Dbase for MyDbase {
         Ok(Response::new(response))
     }
 
-
-
-
-
-
     async fn deluser(&self, request: Request<dbase::DelUserRequest>,) -> Result<Response<dbase::DbaseStatus>, Status> {
         let req = request.into_inner();
         let response = users::handle_deluser(&req.username).await;

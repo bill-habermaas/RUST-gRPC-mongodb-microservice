@@ -27,7 +27,6 @@ mod users;
 //Todo Add setting of MOTD
 //Todo Finish getMOTD
 //Todo Add time stamps to user and motd records
-//Todo Add apache license headers to each source module
 
 use once_cell::sync::OnceCell;
 

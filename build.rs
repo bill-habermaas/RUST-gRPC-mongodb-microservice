@@ -14,8 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     tonic_build::compile_protos("api/proto/dbase.proto")?;
     Ok(())

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+use std::collections::HashMap;
 use tonic::{transport::Server, Request, Response, Status};
 extern crate mongodb;
 use mongodb::Database;
@@ -132,14 +133,36 @@ impl Dbase for MyDbase {
 // Runtime to run our server
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "[::1]:50052".parse()?;
+    let params = getconfig();
+    let grpc_addr = params.get("db-grpc-addr").unwrap().to_string();
+    let addr = grpc_addr.parse()?;
     let serv = MyDbase::default();
 
-    println!("Starting gRPC Mongodb server...");
+    println!("Starting gRPC Mongodb server at {}", grpc_addr);
     Server::builder()
         .add_service(DbaseServer::new(serv))
         .serve(addr)
         .await?;
 
     Ok(())
+}
+
+use config::{Config};
+pub fn getconfig() -> HashMap<String, String> {
+    let settings = Config::builder()
+        // Add in `./Settings.toml`
+        .add_source(config::File::with_name("setting.toml"))
+        // Add in settings from the environment (with a prefix of APP)
+        // Eg.. `APP_DEBUG=1 ./target/app` would set the `debug` key
+        .add_source(config::Environment::with_prefix("APP"))
+        .build()
+        .unwrap();
+
+    let xxx = settings.clone();
+
+    // Print out our settings (as a HashMap)
+    let themap: HashMap<String, String> =
+        xxx.try_deserialize::<HashMap<String, String>>()
+            .unwrap();
+    themap
 }
